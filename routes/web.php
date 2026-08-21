@@ -38,6 +38,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/cart/remove/{cart}', [ShopController::class, 'removeFromCart'])->name('cart.remove');
     Route::post('/checkout', [ShopController::class, 'checkout'])->name('checkout');
     Route::get('/my-orders', [ShopController::class, 'myOrders'])->name('orders.my');
+    Route::post('/orders/{order}/mark-received', [ShopController::class, 'markOrderReceived'])->name('orders.markReceived');
+    Route::post('/order-items/{orderItem}/mark-received', [ShopController::class, 'markOrderItemReceived'])->name('orderItems.markReceived');
 
     // Profile Management
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

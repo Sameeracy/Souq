@@ -54,8 +54,8 @@
   - `user()`: `belongsTo(User::class)`
   - `items()`: `hasMany(OrderItem::class)`
 
-### `order_items` (Seller Delivery Routing)
-- **Fields:** `id`, `order_id` (FK -> `orders`), `seller_id` (FK -> `users`), `product_id` (FK -> `products`), `product_option_id` (nullable FK -> `product_options`), `quantity`, `price`, `timestamps`.
+### `order_items` (Seller Delivery Routing & Status)
+- **Fields:** `id`, `order_id` (FK -> `orders`), `seller_id` (FK -> `users`), `product_id` (FK -> `products`), `product_option_id` (nullable FK -> `product_options`), `quantity`, `price`, `status` (string, `'pending'` or `'received'`), `timestamps`.
 - **Relationships:**
   - `order()`: `belongsTo(Order::class)`
   - `seller()`: `belongsTo(User::class, 'seller_id')`
@@ -74,6 +74,8 @@
 - `POST /cart/remove/{cart}` (`cart.remove`): Removes item from cart.
 - `POST /checkout` (`checkout`): Atomic DB transaction creating master order + seller-partitioned order items, clearing cart.
 - `GET /my-orders` (`orders.my`): Customer order history with fulfillment status.
+- `POST /orders/{order}/mark-received` (`orders.markReceived`): Buyer marks entire order as received (clears delivery data from seller's active message box feed).
+- `POST /order-items/{orderItem}/mark-received` (`orderItems.markReceived`): Buyer marks specific order item as received.
 
 ### `SellerProductController` (Protected by `role:seller`)
 - `GET /seller/dashboard` (`seller.dashboard`): Performance KPIs, listed products management (Add/Edit/Delete), and **Live Buyer Delivery & Contact Details side box**.

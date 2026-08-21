@@ -156,22 +156,22 @@
                             </div>
                             <div>
                                 <h2 class="font-bold text-sm leading-tight">Buyer Delivery & Contact Box</h2>
-                                <p class="text-[11px] text-indigo-200">Incoming dispatch details for your items</p>
+                                <p class="text-[11px] text-indigo-200">Active dispatch details (auto-cleared once received)</p>
                             </div>
                         </div>
                         <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/40 text-indigo-100 border border-indigo-400/30">
-                            Live Feed
+                            Active Feed
                         </span>
                     </div>
 
                     @if($recentOrders->isEmpty())
                         <div class="p-8 text-center text-slate-500">
-                            <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+                            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto mb-2">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                             </div>
-                            <p class="font-bold text-slate-700 text-sm">No incoming orders yet</p>
+                            <p class="font-bold text-slate-700 text-sm">All deliveries completed!</p>
                             <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto">
-                                When a buyer purchases any of your listed products, their contact details & delivery address will appear here instantly.
+                                There are no pending shipments. When a buyer places an order, their delivery info appears here until they mark it as received.
                             </p>
                         </div>
                     @else

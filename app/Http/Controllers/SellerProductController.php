@@ -28,8 +28,19 @@ class SellerProductController extends Controller
             return $item->price * $item->quantity;
         });
 
-        // 3. Recent incoming orders for the side delivery message box
-        $recentOrders = $sellerOrderItems->take(15);
+        // 3. Active incoming dispatch notices for the side delivery message box
+        // (Items disappear once marked as received by the buyer)
+        $recentOrders = $user->sellerOrderItems()
+            ->where(function ($query) {
+                $query->whereNull('status')
+                      ->orWhere('status', '!=', 'received');
+            })
+            ->whereHas('order', function ($query) {
+                $query->where('status', '!=', 'completed');
+            })
+            ->with(['order.user', 'product', 'option'])
+            ->latest()
+            ->get();
 
         return view('seller.dashboard', compact('products', 'totalProducts', 'totalSold', 'totalRevenue', 'recentOrders', 'sellerOrderItems'));
     }

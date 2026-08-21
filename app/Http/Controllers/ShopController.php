@@ -163,4 +163,40 @@ class ShopController extends Controller
 
         return view('shop.orders', compact('orders'));
     }
+
+    /**
+     * Mark an entire order as received by the buyer.
+     */
+    public function markOrderReceived(Order $order)
+    {
+        if ($order->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $order->update(['status' => 'completed']);
+        $order->items()->update(['status' => 'received']);
+
+        return back()->with('success', 'Order #' . $order->id . ' has been marked as received! The delivery notice has been cleared from the seller\'s active message box.');
+    }
+
+    /**
+     * Mark a specific order item as received by the buyer.
+     */
+    public function markOrderItemReceived(OrderItem $orderItem)
+    {
+        if ($orderItem->order->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $orderItem->update(['status' => 'received']);
+
+        // If all items in this order are now received, mark the master order completed as well
+        $order = $orderItem->order;
+        if ($order->items()->where('status', '!=', 'received')->count() === 0) {
+            $order->update(['status' => 'completed']);
+        }
+
+        $productName = $orderItem->product->title ?? 'Product';
+        return back()->with('success', '"' . $productName . '" has been marked as received! The delivery notice has been cleared from the seller\'s active message box.');
+    }
 }
