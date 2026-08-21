@@ -1,0 +1,166 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Product;
+use App\Models\Cart;
+use App\Models\Order;
+use App\Models\ProductOption;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+
+class ShopController extends Controller
+{
+    /**
+     * Display the marketplace catalog.
+     */
+    public function index(Request $request)
+    {
+        $search = $request->query('search');
+
+        $query = Product::with(['seller', 'options'])->latest();
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhereHas('seller', function ($sellerQuery) use ($search) {
+                      $sellerQuery->where('name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        $products = $query->paginate(12)->withQueryString();
+
+        return view('welcome', compact('products', 'search'));
+    }
+
+    /**
+     * Display a specific product with its variants.
+     */
+    public function show(Product $product)
+    {
+        $product->load(['seller', 'options']);
+        return view('shop.show', compact('product'));
+    }
+
+    /**
+     * Add a product to the user's cart.
+     */
+    public function addToCart(Request $request, Product $product)
+    {
+        $request->validate([
+            'product_option_id' => 'nullable|exists:product_options,id',
+            'quantity' => 'required|integer|min:1|max:99'
+        ]);
+
+        // If product has options and none was chosen, and options exist, check if option is required
+        if ($product->options()->count() > 0 && !$request->filled('product_option_id')) {
+            return back()->with('error', 'Please select a variant before adding to cart.');
+        }
+
+        $cart = Cart::firstOrNew([
+            'user_id' => Auth::id(),
+            'product_id' => $product->id,
+            'product_option_id' => $request->product_option_id,
+        ]);
+
+        $cart->quantity = $cart->exists ? ($cart->quantity + (int)$request->quantity) : (int)$request->quantity;
+        $cart->save();
+
+        return redirect()->route('cart.index')->with('success', 'Added "' . $product->title . '" to your cart.');
+    }
+
+    /**
+     * Remove an item from the cart.
+     */
+    public function removeFromCart(Cart $cart)
+    {
+        if ($cart->user_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $cart->delete();
+        return back()->with('success', 'Item removed from cart.');
+    }
+
+    /**
+     * View the shopping cart.
+     */
+    public function cart()
+    {
+        $cartItems = Cart::with(['product.seller', 'option'])
+            ->where('user_id', Auth::id())
+            ->get();
+        
+        $total = $cartItems->sum(function ($item) {
+            return $item->effective_price * $item->quantity;
+        });
+
+        return view('shop.cart', compact('cartItems', 'total'));
+    }
+
+    /**
+     * Process checkout and notify sellers.
+     */
+    public function checkout(Request $request)
+    {
+        $request->validate([
+            'delivery_address' => 'required|string|min:5|max:1000',
+            'contact_details' => 'required|string|min:3|max:255',
+        ]);
+
+        $cartItems = Cart::with(['product', 'option'])
+            ->where('user_id', Auth::id())
+            ->get();
+        
+        if ($cartItems->isEmpty()) {
+            return redirect()->route('cart.index')->with('error', 'Your cart is empty. Add products before checking out.');
+        }
+
+        DB::transaction(function () use ($request, $cartItems) {
+            $total = $cartItems->sum(function ($item) {
+                return $item->effective_price * $item->quantity;
+            });
+
+            // 1. Create the Master Order for the Buyer
+            $order = Order::create([
+                'user_id' => Auth::id(),
+                'delivery_address' => $request->delivery_address,
+                'contact_details' => $request->contact_details,
+                'total_amount' => $total,
+                'status' => 'pending',
+            ]);
+
+            // 2. Create Order Items routed to each respective Seller
+            foreach ($cartItems as $item) {
+                $order->items()->create([
+                    'seller_id' => $item->product->seller_id,
+                    'product_id' => $item->product_id,
+                    'product_option_id' => $item->product_option_id,
+                    'quantity' => $item->quantity,
+                    'price' => $item->effective_price,
+                ]);
+            }
+
+            // 3. Clear user's cart
+            Cart::where('user_id', Auth::id())->delete();
+        });
+
+        return redirect()->route('orders.my')->with('success', 'Order placed successfully! Delivery details and contact info have been sent to the sellers.');
+    }
+
+    /**
+     * Display buyer's order history.
+     */
+    public function myOrders()
+    {
+        $orders = Auth::user()->orders()
+            ->with(['items.product', 'items.option', 'items.seller'])
+            ->latest()
+            ->get();
+
+        return view('shop.orders', compact('orders'));
+    }
+}
