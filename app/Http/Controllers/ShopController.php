@@ -123,7 +123,6 @@ class ShopController extends Controller
         if ($cartItems->isEmpty()) {
             return redirect()->route('cart.index')->with('error', 'Your cart is empty. Add products before checking out.');
         }
-
         try {
             $checkoutSessionUrl = DB::transaction(function () use ($request, $cartItems) {
                 $total = $cartItems->sum(function ($item) {
