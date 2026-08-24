@@ -13,6 +13,20 @@
             </a>
         </div>
 
+        @if(request('payment') === 'success')
+            <div class="mb-8 p-4 sm:p-5 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-start space-x-3.5 text-emerald-900 shadow-sm animate-fade-in">
+                <div class="p-2 rounded-xl bg-emerald-100 text-emerald-700 shrink-0">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                </div>
+                <div>
+                    <h3 class="font-bold text-base text-emerald-950">Payment Successful!</h3>
+                    <p class="text-sm text-emerald-800 mt-0.5">
+                        Your payment via Stripe was processed successfully. Your order has been placed and dispatched to the seller's dashboard.
+                    </p>
+                </div>
+            </div>
+        @endif
+
         @if($orders->isEmpty())
             <div class="bg-white rounded-3xl border border-slate-200/80 p-12 text-center max-w-lg mx-auto shadow-sm">
                 <div class="w-16 h-16 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto mb-4">

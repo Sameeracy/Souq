@@ -55,6 +55,13 @@
                                     <div class="text-xs text-slate-400">Item Revenue</div>
                                     <div class="text-base font-black text-indigo-600">Rs. {{ number_format($item->price * $item->quantity, 2) }}</div>
                                 </div>
+                                
+                                @if($item->order && $item->order->payment_status === 'paid')
+                                    <span class="px-2 py-1 text-[11px] font-bold rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                        Paid (Stripe)
+                                    </span>
+                                @endif
+
                                 @if($item->status === 'received' || ($item->order && $item->order->status === 'completed'))
                                     <span class="px-2.5 py-1 text-xs font-bold rounded-full bg-emerald-100 text-emerald-800 flex items-center">
                                         <svg class="w-3.5 h-3.5 mr-1 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>

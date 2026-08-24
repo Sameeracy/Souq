@@ -6,9 +6,14 @@ use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Cart;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\ProductOption;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
+use Stripe\Stripe;
+use Stripe\Checkout\Session as StripeSession;
 
 class ShopController extends Controller
 {
@@ -102,7 +107,7 @@ class ShopController extends Controller
     }
 
     /**
-     * Process checkout and notify sellers.
+     * Process checkout, create pending order and redirect to Stripe Checkout.
      */
     public function checkout(Request $request)
     {
@@ -111,7 +116,7 @@ class ShopController extends Controller
             'contact_details' => 'required|string|min:3|max:255',
         ]);
 
-        $cartItems = Cart::with(['product', 'option'])
+        $cartItems = Cart::with(['product.seller', 'option'])
             ->where('user_id', Auth::id())
             ->get();
         
@@ -119,36 +124,92 @@ class ShopController extends Controller
             return redirect()->route('cart.index')->with('error', 'Your cart is empty. Add products before checking out.');
         }
 
-        DB::transaction(function () use ($request, $cartItems) {
-            $total = $cartItems->sum(function ($item) {
-                return $item->effective_price * $item->quantity;
+        try {
+            $checkoutSessionUrl = DB::transaction(function () use ($request, $cartItems) {
+                $total = $cartItems->sum(function ($item) {
+                    return $item->effective_price * $item->quantity;
+                });
+
+                // 1. Create the Master Order for the Buyer (Status: pending, awaiting Stripe webhook)
+                $orderData = [
+                    'user_id' => Auth::id(),
+                    'delivery_address' => $request->delivery_address,
+                    'contact_details' => $request->contact_details,
+                    'total_amount' => $total,
+                    'status' => 'pending',
+                ];
+
+                if (Schema::hasColumn('orders', 'payment_status')) {
+                    $orderData['payment_status'] = 'unpaid';
+                }
+
+                $order = Order::create($orderData);
+
+                $lineItems = [];
+
+                // 2. Create Order Items routed to each respective Seller & build Stripe Line Items
+                foreach ($cartItems as $item) {
+                    $order->items()->create([
+                        'seller_id' => $item->product->seller_id,
+                        'product_id' => $item->product_id,
+                        'product_option_id' => $item->product_option_id,
+                        'quantity' => $item->quantity,
+                        'price' => $item->effective_price,
+                        'status' => 'pending',
+                    ]);
+
+                    // Construct product title with variant info
+                    $productTitle = $item->product->title;
+                    if ($item->option) {
+                        $productTitle .= ' (' . $item->option->name . ': ' . $item->option->value . ')';
+                    }
+
+                    $lineItems[] = [
+                        'price_data' => [
+                            'currency' => config('services.stripe.currency', 'pkr'),
+                            'product_data' => [
+                                'name' => $productTitle,
+                                'description' => 'Seller: ' . ($item->product->seller->name ?? 'Verified Seller'),
+                            ],
+                            'unit_amount' => (int) round($item->effective_price * 100),
+                        ],
+                        'quantity' => $item->quantity,
+                    ];
+                }
+
+                // 3. Clear user's cart
+                Cart::where('user_id', Auth::id())->delete();
+
+                // 4. Initialize Stripe & Create Hosted Checkout Session
+                Stripe::setApiKey(config('services.stripe.secret'));
+
+                $session = StripeSession::create([
+                    'payment_method_types' => ['card'],
+                    'line_items' => $lineItems,
+                    'mode' => 'payment',
+                    'customer_email' => Auth::user()->email,
+                    'client_reference_id' => (string) $order->id,
+                    'metadata' => [
+                        'order_id' => (string) $order->id,
+                        'user_id' => (string) Auth::id(),
+                    ],
+                    'success_url' => route('orders.my') . '?payment=success&order_id=' . $order->id,
+                    'cancel_url' => route('cart.index') . '?payment=cancelled',
+                ]);
+
+                if (Schema::hasColumn('orders', 'stripe_session_id')) {
+                    $order->update(['stripe_session_id' => $session->id]);
+                }
+
+                return $session->url;
             });
 
-            // 1. Create the Master Order for the Buyer
-            $order = Order::create([
-                'user_id' => Auth::id(),
-                'delivery_address' => $request->delivery_address,
-                'contact_details' => $request->contact_details,
-                'total_amount' => $total,
-                'status' => 'pending',
-            ]);
+            return redirect()->away($checkoutSessionUrl);
 
-            // 2. Create Order Items routed to each respective Seller
-            foreach ($cartItems as $item) {
-                $order->items()->create([
-                    'seller_id' => $item->product->seller_id,
-                    'product_id' => $item->product_id,
-                    'product_option_id' => $item->product_option_id,
-                    'quantity' => $item->quantity,
-                    'price' => $item->effective_price,
-                ]);
-            }
-
-            // 3. Clear user's cart
-            Cart::where('user_id', Auth::id())->delete();
-        });
-
-        return redirect()->route('orders.my')->with('success', 'Order placed successfully! Delivery details and contact info have been sent to the sellers.');
+        } catch (\Exception $e) {
+            Log::error('Stripe Checkout Exception: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return redirect()->route('cart.index')->with('error', 'Payment initialization failed: ' . $e->getMessage());
+        }
     }
 
     /**

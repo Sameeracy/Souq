@@ -6,11 +6,15 @@ use App\Http\Controllers\ShopController;
 use App\Http\Controllers\SellerProductController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\SellerOrderController;
+use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Auth;
 
 // Public Marketplace Catalog
 Route::get('/', [ShopController::class, 'index'])->name('home');
 Route::get('/product/{product}', [ShopController::class, 'show'])->name('product.show');
+
+// Stripe Webhook Endpoint (External callback from Stripe)
+Route::post('/webhook/stripe', [StripeWebhookController::class, 'handle'])->name('stripe.webhook');
 
 // Intelligent Role-based Dashboard Dispatcher
 Route::get('/dashboard', function () {
