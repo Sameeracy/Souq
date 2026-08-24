@@ -4,12 +4,8 @@
         <div class="absolute inset-0 opacity-10 bg-[radial-gradient(#6366f1_1px,transparent_1px)] [background-size:16px_16px]"></div>
         <div class="relative max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-8">
             <div class="max-w-2xl text-center md:text-left">
-                <div class="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-4 border border-indigo-400/20">
-                    <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
-                    <span>Direct-from-Seller Marketplace</span>
-                </div>
                 <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
-                    Discover Quality Products on <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-violet-300 to-purple-400">Souq</span>
+                 <span class="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-violet-300 to-purple-400">Souq</span>
                 </h1>
                 <p class="mt-3 text-base sm:text-lg text-slate-300">
                     Connect directly with independent sellers, explore customizable product variants, and enjoy straightforward order delivery.
