@@ -110,7 +110,7 @@ class ShopController extends Controller
      * Process checkout, create pending order and redirect to Stripe Checkout.
      */
     public function checkout(Request $request)
-    {
+    {//dd('123');
         $request->validate([
             'delivery_address' => 'required|string|min:5|max:1000',
             'contact_details' => 'required|string|min:3|max:255',
