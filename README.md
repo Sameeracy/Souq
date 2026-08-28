@@ -1,12 +1,6 @@
 ```markdown
 # Souq Marketplace : Multi-Vendor E-Commerce Platform
 
-**Author:** Sameer Muhammad[cite: 1]  
-**Internship:** Web Development – KPITB Peshawar, KPK[cite: 1]  
-**Framework / Stack:** Laravel (PHP 8.x), MySQL, Tailwind CSS, Alpine.js, Vite, Stripe API[cite: 5]
-
----
-
 ## 📌 Project Overview
 **Souq** is an enterprise-grade multi-vendor e-commerce platform built with Laravel[cite: 1, 5]. It implements a multi-tenant marketplace architecture where independent sellers manage catalogs and order fulfillments, while buyers experience a unified shopping cart and secure Stripe checkout[cite: 5]. The system is built with robust security boundaries (RBAC, IDOR protection, HMAC webhook verification), ACID database transactions, dynamic variant pricing, and reactive frontends[cite: 5].
 
