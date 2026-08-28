@@ -157,8 +157,5 @@ Run the automated feature tests with database refresh and mocked webhook asserti
 ```bash
 php artisan test --filter StripePaymentTest
 
-```
-
-```
 
 ```
