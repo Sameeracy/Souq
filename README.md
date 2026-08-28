@@ -1,58 +1,164 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+```markdown
+# Souq Marketplace : Multi-Vendor E-Commerce Platform
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**Author:** Sameer Muhammad[cite: 1]  
+**Internship:** Web Development – KPITB Peshawar, KPK[cite: 1]  
+**Framework / Stack:** Laravel (PHP 8.x), MySQL, Tailwind CSS, Alpine.js, Vite, Stripe API[cite: 5]
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📌 Project Overview
+**Souq** is an enterprise-grade multi-vendor e-commerce platform built with Laravel[cite: 1, 5]. It implements a multi-tenant marketplace architecture where independent sellers manage catalogs and order fulfillments, while buyers experience a unified shopping cart and secure Stripe checkout[cite: 5]. The system is built with robust security boundaries (RBAC, IDOR protection, HMAC webhook verification), ACID database transactions, dynamic variant pricing, and reactive frontends[cite: 5].
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🚀 Key Features & Architectural Highlights
 
-## Learning Laravel
+### 1. Multi-Vendor System Design & MVC Architecture
+- **Model-View-Controller Separation:** Distinct domain layers across models (`User`, `Product`, `ProductOption`, `Order`, `OrderItem`, `Cart`), controllers (`ShopController`, `SellerProductController`, `AdminController`), and role-based Blade views[cite: 5].
+- **Multi-Tenant Logical Partitioning:** Independent seller portals with partitioned sales analytics and multi-vendor order-item splitting upon unified customer checkout[cite: 5].
+- **RESTful Resource Routing:** Standardized HTTP verbs (`GET`, `POST`, `PUT`, `DELETE`), route groups, and named route conventions[cite: 5].
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 2. Security & Access Control (AuthN & AuthZ)
+- **Role-Based Access Control (RBAC):** Granular authorization for `admin`, `seller`, and `user` roles powered by `Spatie/laravel-permission` with route middleware protection (`role:seller`, `role:admin`)[cite: 5].
+- **IDOR Prevention:** Strict resource ownership validation (e.g., verifying `$product->seller_id === Auth::id()`) returning `403 Forbidden` for unauthorized modifications[cite: 5].
+- **Authentication & CSRF Defense:** Session persistence, credential hashing (`bcrypt`/`argon2id`) via Laravel Breeze, standard CSRF token verification, and explicit webhook route exemptions in bootstrap configuration[cite: 5].
+- **HMAC-SHA256 Webhook Verification:** Cryptographic signature verification (`Stripe-Signature`) in `StripeWebhookController` protecting against replay and spoofing attacks[cite: 5].
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 3. Database Engineering & ACID Transactions
+- **Atomic Checkout Engine:** Checkout flows wrapped in `DB::transaction()` guaranteeing atomic execution across order creation, order-item splitting, cart purging, and Stripe session generation[cite: 5].
+- **N+1 Query Optimization:** Eager loading (`Product::with(['seller', 'options'])`) to eliminate N+1 database bottlenecks[cite: 5].
+- **Relational Integrity & Schema Management:** Version-controlled database migrations with foreign keys, cascading delete rules, and normalized table structures[cite: 5].
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+### 4. Payments, Webhooks & State Machines
+- **Stripe Hosted Checkout:** Secure payment session redirection eliminating PCI compliance overhead[cite: 5].
+- **Event-Driven Webhook Handling:** Decoupled asynchronous order updates triggered by `checkout.session.completed` webhooks[cite: 5].
+- **Dynamic Pricing Engine:** Fallback pricing logic where variant-specific pricing overrides base product prices via Eloquent model accessors (`effective_price`)[cite: 5].
+- **Fulfillment Lifecycle State Machine:** Multi-state progression (`pending` → `processing` → `received` → `completed`) dynamically updating seller inbox feeds[cite: 5].
 
-## Agentic Development
+### 5. Frontend Reactivity & Asset Tooling
+- **Alpine.js:** Declarative client-side reactivity for dynamic product variant creation and interactive UI states without full-page reloads[cite: 5].
+- **Tailwind CSS:** Utility-first responsive design, interactive micro-states, and custom design tokens[cite: 5].
+- **Vite:** Asset compilation with Hot Module Replacement (HMR) and production minification[cite: 5].
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+---
 
-```bash
-composer require laravel/boost --dev
+## 🛠 Tech Stack
+- **Backend:** PHP 8.x, Laravel Framework[cite: 5]
+- **Frontend:** Tailwind CSS, Alpine.js, Blade Views, Vite[cite: 5]
+- **Database:** MySQL (ACID Transactions, Foreign Keys, Eloquent ORM)[cite: 5]
+- **Payment Processing:** Stripe Hosted Checkout API, Stripe Webhooks[cite: 5]
+- **Access Control:** Spatie Laravel-Permission[cite: 5]
+- **Testing:** PHPUnit, Laravel TestBench, Mocked Webhooks[cite: 5]
 
-php artisan boost:install
+---
+
+## 📂 Project Structure Highlights
+```text
+app/
+├── Http/
+│   ├── Controllers/
+│   │   ├── AdminController.php[cite: 5]
+│   │   ├── Auth/[cite: 5]
+│   │   ├── SellerProductController.php[cite: 5]
+│   │   ├── ShopController.php[cite: 5]
+│   │   └── StripeWebhookController.php[cite: 5]
+│   └── Middleware/[cite: 5]
+├── Models/
+│   ├── Cart.php[cite: 5]
+│   ├── Order.php[cite: 5]
+│   ├── OrderItem.php[cite: 5]
+│   ├── Product.php[cite: 5]
+│   ├── ProductOption.php[cite: 5]
+│   └── User.php[cite: 5]
+database/
+└── migrations/[cite: 5]
+resources/
+└── views/[cite: 5]
+tests/
+└── Feature/
+    └── StripePaymentTest.php[cite: 5]
+
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+---
 
-## Contributing
+## ⚙️ Installation & Setup
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+1. **Clone the repository:**
+```bash
+git clone [https://github.com/your-username/souq-marketplace.git](https://github.com/your-username/souq-marketplace.git)
+cd souq-marketplace
 
-## Code of Conduct
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
 
-## Security Vulnerabilities
+2. **Install PHP and JavaScript dependencies:**
+```bash
+composer install
+npm install && npm run build
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```
 
-## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+3. **Configure environment:**
+```bash
+cp .env.example .env
+php artisan key:generate
+
+```
+
+
+*Configure your MySQL credentials and Stripe keys in `.env`:*
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=souq_db
+DB_USERNAME=root
+DB_PASSWORD=
+
+STRIPE_KEY=pk_test_your_key
+STRIPE_SECRET=sk_test_your_key
+STRIPE_WEBHOOK_SECRET=whsec_your_key
+
+```
+
+
+4. **Run migrations and seed roles:**
+```bash
+php artisan migrate --seed
+
+```
+
+
+5. **Start development server:**
+```bash
+php artisan serve
+
+```
+
+
+Access the application at `http://127.0.0.1:8000`.
+6. **Listen for Stripe webhooks locally (optional):**
+```bash
+stripe listen --forward-to localhost:8000/stripe/webhook
+
+```
+
+
+
+---
+
+## 🧪 Testing
+
+Run the automated feature tests with database refresh and mocked webhook assertions:
+
+```bash
+php artisan test --filter StripePaymentTest
+
+```
+
+```
+
+```
